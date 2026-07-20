@@ -240,3 +240,46 @@ void WebviewWindow::EvaluateJavaScript(const char *java_script, FlMethodCall *ca
       },
       g_object_ref(call));
 }
+
+void WebviewWindow::SetCookie(const char *url, const char *name, const char *value,
+                               const char *domain, const char *path,
+                               int64_t expires_date, gboolean is_secure,
+                               gboolean is_http_only, const char *same_site) {
+  auto *context = webkit_web_view_get_context(WEBKIT_WEB_VIEW(webview_));
+  if (context == nullptr) return;
+
+  auto *manager = webkit_web_context_get_cookie_manager(context);
+  if (manager == nullptr) return;
+
+  SoupCookie *cookie = soup_cookie_new(
+      name, value,
+      (domain != nullptr && strlen(domain) > 0) ? domain : nullptr,
+      (path != nullptr && strlen(path) > 0) ? path : "/",
+      -1  // max-age = session cookie
+  );
+  if (cookie == nullptr) return;
+
+  if (expires_date > 0) {
+    GDateTime *expires = g_date_time_new_from_unix_utc(expires_date / 1000);
+    if (expires != nullptr) {
+      soup_cookie_set_expires(cookie, expires);
+      g_date_time_unref(expires);
+    }
+  }
+
+  soup_cookie_set_secure(cookie, is_secure);
+  soup_cookie_set_http_only(cookie, is_http_only);
+
+  if (same_site != nullptr && strlen(same_site) > 0) {
+    if (g_strcmp0(same_site, "Strict") == 0) {
+      soup_cookie_set_same_site_policy(cookie, SOUP_SAME_SITE_POLICY_STRICT);
+    } else if (g_strcmp0(same_site, "Lax") == 0) {
+      soup_cookie_set_same_site_policy(cookie, SOUP_SAME_SITE_POLICY_LAX);
+    } else {
+      soup_cookie_set_same_site_policy(cookie, SOUP_SAME_SITE_POLICY_NONE);
+    }
+  }
+
+  webkit_cookie_manager_add_cookie(manager, cookie, nullptr, nullptr, nullptr);
+  soup_cookie_free(cookie);
+}

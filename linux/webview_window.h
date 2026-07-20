@@ -47,6 +47,13 @@ class WebviewWindow {
 
   void EvaluateJavaScript(const char *java_script, FlMethodCall* call);
 
+  /// Set a cookie in the WebKitGTK cookie jar before loading a page.
+  /// Uses webkit_cookie_manager_add_cookie with a SoupCookie.
+  void SetCookie(const char *url, const char *name, const char *value,
+                 const char *domain, const char *path, int64_t expires_date,
+                 gboolean is_secure, gboolean is_http_only,
+                 const char *same_site);
+
  private:
   FlMethodChannel *method_channel_;
   int64_t window_id_;

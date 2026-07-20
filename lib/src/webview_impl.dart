@@ -129,10 +129,33 @@ class WebviewImpl extends Webview {
   }
 
   @override
+  void setCookie({
+    required String url,
+    required String name,
+    required String value,
+    String? domain,
+    String path = "/",
+    int? expiresDate,
+    bool isSecure = false,
+    bool isHttpOnly = false,
+    String? sameSite,
+  }) {
+    channel.invokeMethod("setCookie", {
+      "viewId": viewId,
+      "url": url,
+      "name": name,
+      "value": value,
+      "domain": domain,
+      "path": path,
+      "expiresDate": expiresDate,
+      "isSecure": isSecure,
+      "isHttpOnly": isHttpOnly,
+      "sameSite": sameSite,
+    });
+  }
+
+  @override
   void setBrightness(Brightness? brightness) {
-    /// -1 : system default
-    /// 0 : dark
-    /// 1 : light
     if (!Platform.isMacOS) {
       return;
     }

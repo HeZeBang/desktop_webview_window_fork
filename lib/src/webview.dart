@@ -86,6 +86,16 @@ abstract class Webview {
   /// post a web message as String to the top level document in this WebView
   Future<void> postWebMessageAsString(String webMessage);
 
-  /// post a web message as JSON to the top level document in this WebView
-  Future<void> postWebMessageAsJson(String webMessage);
+  /// Set a cookie before loading a page.
+  void setCookie({
+    required String url,
+    required String name,
+    required String value,
+    String? domain,
+    String path = "/",
+    int? expiresDate,
+    bool isSecure = false,
+    bool isHttpOnly = false,
+    String? sameSite,
+  });
 }

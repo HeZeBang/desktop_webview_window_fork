@@ -173,6 +173,36 @@ static void webview_window_plugin_handle_method_call(
     }
     self->windows->at(window_id)->StopLoading();
     fl_method_call_respond_success(method_call, nullptr, nullptr);
+  } else if (strcmp(method, "setCookie") == 0) {
+    auto *args = fl_method_call_get_args(method_call);
+    if (fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+      fl_method_call_respond_error(method_call, "0", "setCookie args is not map", nullptr, nullptr);
+      return;
+    }
+    auto window_id = fl_value_get_int(fl_value_lookup_string(args, "viewId"));
+    if (!self->windows->count(window_id)) {
+      fl_method_call_respond_error(method_call, "0", "can not found webview for viewId", nullptr, nullptr);
+      return;
+    }
+    auto url = fl_value_get_string(fl_value_lookup_string(args, "url"));
+    auto name = fl_value_get_string(fl_value_lookup_string(args, "name"));
+    auto value = fl_value_get_string(fl_value_lookup_string(args, "value"));
+    auto domain = fl_value_lookup_string(args, "domain");
+    auto path = fl_value_lookup_string(args, "path");
+    auto expires_date = fl_value_lookup_string(args, "expiresDate");
+    auto is_secure = fl_value_lookup_string(args, "isSecure");
+    auto is_http_only = fl_value_lookup_string(args, "isHttpOnly");
+    auto same_site = fl_value_lookup_string(args, "sameSite");
+
+    self->windows->at(window_id)->SetCookie(
+        url, name, value,
+        domain ? fl_value_get_string(domain) : "",
+        path ? fl_value_get_string(path) : "/",
+        expires_date ? fl_value_get_int(expires_date) : -1,
+        is_secure ? fl_value_get_bool(is_secure) : FALSE,
+        is_http_only ? fl_value_get_bool(is_http_only) : FALSE,
+        same_site ? fl_value_get_string(same_site) : "");
+    fl_method_call_respond_success(method_call, nullptr, nullptr);
   } else if (strcmp(method, "close") == 0) {
     auto *args = fl_method_call_get_args(method_call);
     if (fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
