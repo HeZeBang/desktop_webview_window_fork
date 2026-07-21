@@ -323,6 +323,36 @@ void WebView::PostWebMessageAsJson(const std::wstring& webmessage,
   }
 }
 
+void WebView::SetCookie(const std::string &url, const std::string &name,
+                        const std::string &value, const std::string &domain,
+                        const std::string &path, int64_t expires_date,
+                        bool is_secure, bool is_http_only,
+                        const std::string &same_site) {
+  if (!webview_) return;
+
+  wil::com_ptr<ICoreWebView2_3> webview2_3;
+  auto hr = webview_->QueryInterface(IID_PPV_ARGS(&webview2_3));
+  if (FAILED(hr) || !webview2_3) return;
+
+  wil::com_ptr<ICoreWebView2CookieManager> cookie_manager;
+  hr = webview2_3->GetCookieManager(&cookie_manager);
+  if (FAILED(hr) || !cookie_manager) return;
+
+  wil::com_ptr<ICoreWebView2Cookie> cookie;
+  hr = cookie_manager->CreateCookie(
+      utf8_to_wide(name).c_str(),
+      utf8_to_wide(value).c_str(),
+      utf8_to_wide(domain.empty() ? url : domain).c_str(),
+      utf8_to_wide(path.empty() ? "/" : path).c_str(),
+      &cookie);
+  if (FAILED(hr) || !cookie) return;
+
+  cookie->put_IsSecure(is_secure ? TRUE : FALSE);
+  cookie->put_IsHttpOnly(is_http_only ? TRUE : FALSE);
+
+  cookie_manager->AddOrUpdateCookie(cookie.get());
+}
+
 WebView::~WebView() {
   if (webview_) {
     webview_->Stop();

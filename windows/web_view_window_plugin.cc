@@ -263,6 +263,48 @@ void WebviewWindowPlugin::HandleMethodCall(
     }
     windows_[window_id]->GetWebView()->openDevToolsWindow();
     result->Success();
+  } else if (method_call.method_name() == "setCookie") {
+    auto *arguments = std::get_if<flutter::EncodableMap>(method_call.arguments());
+    auto window_id = arguments->at(flutter::EncodableValue("viewId")).LongValue();
+    auto url = std::get<std::string>(arguments->at(flutter::EncodableValue("url")));
+    auto name = std::get<std::string>(arguments->at(flutter::EncodableValue("name")));
+    auto value = std::get<std::string>(arguments->at(flutter::EncodableValue("value")));
+    std::string domain = "";
+    std::string path = "/";
+    int64_t expires_date = -1;
+    bool is_secure = false;
+    bool is_http_only = false;
+    std::string same_site = "";
+    auto it = arguments->find(flutter::EncodableValue("domain"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      domain = std::get<std::string>(it->second);
+    it = arguments->find(flutter::EncodableValue("path"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      path = std::get<std::string>(it->second);
+    it = arguments->find(flutter::EncodableValue("expiresDate"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      expires_date = it->second.LongValue();
+    it = arguments->find(flutter::EncodableValue("isSecure"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      is_secure = std::get<bool>(it->second);
+    it = arguments->find(flutter::EncodableValue("isHttpOnly"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      is_http_only = std::get<bool>(it->second);
+    it = arguments->find(flutter::EncodableValue("sameSite"));
+    if (it != arguments->end() && !std::holds_alternative<std::monostate>(it->second))
+      same_site = std::get<std::string>(it->second);
+    if (!windows_.count(window_id)) {
+      result->Error("0", "can not find webview window for id");
+      return;
+    }
+    if (!windows_[window_id]->GetWebView()) {
+      result->Error("0", "webview window not ready");
+      return;
+    }
+    windows_[window_id]->GetWebView()->SetCookie(
+        url, name, value, domain, path, expires_date,
+        is_secure, is_http_only, same_site);
+    result->Success();
   } else {
     result->NotImplemented();
   }

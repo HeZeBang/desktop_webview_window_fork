@@ -60,6 +60,11 @@ class WebView {
   void PostWebMessageAsJson(const std::wstring &webmessage,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> completer);
 
+  void SetCookie(const std::string &url, const std::string &name,
+                 const std::string &value, const std::string &domain,
+                 const std::string &path, int64_t expires_date,
+                 bool is_secure, bool is_http_only,
+                 const std::string &same_site);
  private:
   wil::unique_hwnd view_window_;
 
