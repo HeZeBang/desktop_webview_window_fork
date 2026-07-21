@@ -66,13 +66,19 @@ WebviewWindow::WebviewWindow(
   g_signal_connect(G_OBJECT(window_), "destroy",
                    G_CALLBACK(+[](GtkWidget *, gpointer arg) {
                      auto *window = static_cast<WebviewWindow *>(arg);
+                     // Save window_id and method_channel BEFORE calling
+                     // on_close_callback_, because it triggers
+                     // self->windows->erase(window_id) which destroys
+                     // this WebviewWindow (use-after-free otherwise).
+                     auto window_id = window->window_id_;
+                     auto method_channel = window->method_channel_;
                      if (window->on_close_callback_) {
                        window->on_close_callback_();
                      }
                      auto *args = fl_value_new_map();
-                     fl_value_set(args, fl_value_new_string("id"), fl_value_new_int(window->window_id_));
+                     fl_value_set(args, fl_value_new_string("id"), fl_value_new_int(window_id));
                      fl_method_channel_invoke_method(
-                         FL_METHOD_CHANNEL(window->method_channel_), "onWindowClose", args,
+                         FL_METHOD_CHANNEL(method_channel), "onWindowClose", args,
                          nullptr, nullptr, nullptr);
                    }), this);
   gtk_window_set_title(GTK_WINDOW(window_), title.c_str());
