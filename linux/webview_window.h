@@ -46,6 +46,7 @@ class WebviewWindow {
                         WebKitPolicyDecisionType type);
 
   void EvaluateJavaScript(const char *java_script, FlMethodCall* call);
+  void OnScriptMessageReceived(WebKitJavascriptResult *message);
 
   /// Set a cookie in the WebKitGTK cookie jar before loading a page.
   /// Uses webkit_cookie_manager_add_cookie with a SoupCookie.

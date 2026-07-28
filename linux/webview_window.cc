@@ -46,6 +46,13 @@ gboolean decide_policy_cb(WebKitWebView *web_view,
   return window->DecidePolicy(decision, type);
 }
 
+void on_script_message_received(WebKitUserContentManager *manager,
+                                WebKitJavascriptResult *message,
+                                gpointer user_data) {
+  auto *window = static_cast<WebviewWindow *>(user_data);
+  window->OnScriptMessageReceived(message);
+}
+
 }
 
 WebviewWindow::WebviewWindow(
@@ -104,6 +111,13 @@ WebviewWindow::WebviewWindow(
 
   // initial web_view
   webview_ = webkit_web_view_new();
+  auto *manager = webkit_web_view_get_user_content_manager(WEBKIT_WEB_VIEW(webview_));
+  webkit_user_content_manager_register_script_message_handler(manager, "TechPieBridge");
+  g_signal_connect(manager,
+                   "script-message-received::TechPieBridge",
+                   G_CALLBACK(on_script_message_received),
+                   this);
+
   g_signal_connect(G_OBJECT(webview_), "load-failed-with-tls-errors",
                    G_CALLBACK(on_load_failed_with_tls_errors), this);
   g_signal_connect(G_OBJECT(webview_), "create",
@@ -226,6 +240,24 @@ gboolean WebviewWindow::DecidePolicy(WebKitPolicyDecision *decision, WebKitPolic
         nullptr, nullptr, nullptr);
   }
   return false;
+}
+
+void WebviewWindow::OnScriptMessageReceived(WebKitJavascriptResult *message) {
+  auto *value = webkit_javascript_result_get_js_value(message);
+  gchar *message_text = nullptr;
+  if (jsc_value_is_string(value)) {
+    message_text = jsc_value_to_string(value);
+  } else {
+    message_text = jsc_value_to_json(value, 0);
+  }
+  const char *text = message_text != nullptr ? message_text : "{}";
+  auto *args = fl_value_new_map();
+  fl_value_set(args, fl_value_new_string("id"), fl_value_new_int(window_id_));
+  fl_value_set(args, fl_value_new_string("message"), fl_value_new_string(text));
+  fl_method_channel_invoke_method(
+      FL_METHOD_CHANNEL(method_channel_), "onWebMessageReceived", args,
+      nullptr, nullptr, nullptr);
+  g_free(message_text);
 }
 
 void WebviewWindow::EvaluateJavaScript(const char *java_script, FlMethodCall *call) {
