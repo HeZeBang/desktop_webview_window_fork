@@ -335,7 +335,7 @@ void WebView::SetCookie(const std::string &url, const std::string &name,
   if (FAILED(hr) || !webview2_3) return;
 
   wil::com_ptr<ICoreWebView2CookieManager> cookie_manager;
-  hr = webview2_3->GetCookieManager(&cookie_manager);
+  hr = webview2_3->get_CookieManager(&cookie_manager);
   if (FAILED(hr) || !cookie_manager) return;
 
   wil::com_ptr<ICoreWebView2Cookie> cookie;
